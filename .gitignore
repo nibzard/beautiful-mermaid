@@ -6,7 +6,7 @@ dist/
 *.tsbuildinfo
 
 # Generated files
-index.html
+/index.html
 
 # IDE
 .idea/

@@ -103,6 +103,45 @@ Also available via [jsDelivr](https://cdn.jsdelivr.net/npm/beautiful-mermaid/dis
 
 ---
 
+## Interactive Diagrams (Drag & Drop)
+
+Add drag-and-drop functionality to your diagrams with the companion package **`interactive-mermaid`**:
+
+```bash
+npm install interactive-mermaid
+```
+
+```typescript
+import { renderMermaid } from 'beautiful-mermaid'
+import { makeInteractive } from 'interactive-mermaid'
+
+// Render the diagram
+const svg = await renderMermaid('graph TD; A-->B;', { bg: '#1a1b26', fg: '#a9b1d6' })
+container.innerHTML = svg
+
+// Make it interactive
+const instance = makeInteractive(container, {
+  onDragEnd: (state) => {
+    console.log('New positions:', state.positions)
+  },
+  gridSize: 10,
+  autoSave: true
+})
+```
+
+Features:
+- ✅ Drag nodes to rearrange diagrams
+- ✅ Edges follow automatically
+- ✅ Position auto-save to localStorage
+- ✅ Touch support for mobile
+- ✅ All diagram types supported
+
+[**Try the interactive demo →**](https://lukilabs.github.io/beautiful-mermaid/)
+
+See [interactive-mermaid](./interactive-mermaid) for full documentation.
+
+---
+
 ## Theming
 
 The theming system is the heart of `beautiful-mermaid`. It's designed to be both powerful and dead simple.

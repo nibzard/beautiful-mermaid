@@ -1,0 +1,65 @@
+{
+  "name": "interactive-mermaid",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Drag-and-drop wrapper for beautiful-mermaid diagrams",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./browser": {
+      "types": "./dist/interactive-mermaid.browser.d.ts",
+      "default": "./dist/interactive-mermaid.browser.global.js"
+    }
+  },
+  "unpkg": "./dist/interactive-mermaid.browser.global.js",
+  "jsdelivr": "./dist/interactive-mermaid.browser.global.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukilabs/beautiful-mermaid"
+  },
+  "homepage": "https://github.com/lukilabs/beautiful-mermaid/tree/main/packages/interactive-mermaid",
+  "bugs": {
+    "url": "https://github.com/lukilabs/beautiful-mermaid/issues"
+  },
+  "keywords": [
+    "mermaid",
+    "diagram",
+    "interactive",
+    "drag-drop",
+    "svg",
+    "flowchart",
+    "sequence-diagram",
+    "state-diagram",
+    "class-diagram",
+    "er-diagram"
+  ],
+  "author": "Luki Labs",
+  "peerDependencies": {
+    "beautiful-mermaid": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "beautiful-mermaid": "file:..",
+    "happy-dom": "^15.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "scripts": {
+    "test": "vitest",
+    "build": "tsup",
+    "prepublishOnly": "npm run build"
+  }
+}

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Mermaid - Vanilla JS Example</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    button.secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    button.secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .diagram-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .info-panel {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Interactive mermaid styles */
+    .mermaid-draggable {
+      transition: opacity 0.2s;
+    }
+
+    .mermaid-draggable:hover {
+      opacity: 0.8;
+    }
+
+    .mermaid-dragging {
+      opacity: 0.6;
+    }
+
+    .theme-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .theme-selector label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .diagram-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Interactive Mermaid Demo</h1>
+    <p class="subtitle">Drag nodes to rearrange the diagram. Positions are automatically saved.</p>
+
+    <div class="controls">
+      <div class="diagram-selector">
+        <label for="diagramSelect">Diagram:</label>
+        <select id="diagramSelect">
+          <option value="flowchart">Flowchart</option>
+          <option value="state">State Diagram</option>
+          <option value="class">Class Diagram</option>
+          <option value="er">ER Diagram</option>
+        </select>
+      </div>
+
+      <div class="theme-selector">
+        <label for="themeSelect">Theme:</label>
+        <select id="themeSelect">
+          <option value="tokyo-night">Tokyo Night</option>
+          <option value="light">Light</option>
+          <option value="nord">Nord</option>
+          <option value="monokai">Monokai</option>
+        </select>
+      </div>
+
+      <button id="resetBtn">Reset Positions</button>
+      <button id="clearBtn" class="secondary">Clear Saved</button>
+    </div>
+
+    <div id="status" class="status info">Ready</div>
+
+    <div class="diagram-container" id="diagramContainer">
+      <!-- Diagram will be rendered here -->
+    </div>
+
+    <div class="info-panel" id="infoPanel">Drag a node to see position updates...</div>
+  </div>
+
+  <!-- Load beautiful-mermaid first (peer dependency) -->
+  <script src="../../../dist/beautiful-mermaid.browser.global.js"></script>
+  <!-- Load interactive-mermaid -->
+  <script src="../dist/interactive-mermaid.browser.global.js"></script>
+
+  <script>
+    // Diagram definitions
+    const diagrams = {
+      flowchart: `graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Process 1]
+    B -->|No| D[Process 2]
+    C --> E[End]
+    D --> E
+    C --> F[Alternative]
+    F --> E`,
+
+      state: `stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing: Start
+    Processing --> Success: Complete
+    Processing --> Error: Failed
+    Error --> Idle: Retry
+    Success --> [*]`,
+
+      class: `classDiagram
+    class Animal {
+        +String name
+        +int age
+        +makeSound()
+    }
+    class Dog {
+        +bark()
+        +fetch()
+    }
+    class Cat {
+        +meow()
+        +scratch()
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat`,
+
+      er: `erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    PRODUCT ||--o{ LINE_ITEM : "ordered in"
+    CUSTOMER {
+        string name
+        string email
+        int id PK
+    }
+    ORDER {
+        int id PK
+        date created
+    }
+    PRODUCT {
+        int id PK
+        string name
+        float price
+    }`
+    };
+
+    // Theme definitions
+    const themes = {
+      'tokyo-night': {
+        bg: '#1a1b26',
+        fg: '#a9b1d6',
+        line: '#414868',
+        accent: '#7aa2f7',
+        muted: '#565f89',
+        surface: '#24283b',
+        border: '#414868'
+      },
+      light: {
+        bg: '#ffffff',
+        fg: '#27272a',
+        line: '#a1a1aa',
+        accent: '#3b82f6',
+        muted: '#71717a',
+        surface: '#f4f4f5',
+        border: '#e4e4e7'
+      },
+      nord: {
+        bg: '#2e3440',
+        fg: '#eceff4',
+        line: '#4c566a',
+        accent: '#88c0d0',
+        muted: '#81a1c1',
+        surface: '#3b4252',
+        border: '#4c566a'
+      },
+      monokai: {
+        bg: '#272822',
+        fg: '#f8f8f2',
+        line: '#75715e',
+        accent: '#a6e22e',
+        muted: '#66d9ef',
+        surface: '#3e3d32',
+        border: '#49483e'
+      }
+    };
+
+    // State
+    let currentInstance = null;
+    let currentDiagram = 'flowchart';
+    let currentTheme = 'tokyo-night';
+
+    // DOM elements
+    const container = document.getElementById('diagramContainer');
+    const diagramSelect = document.getElementById('diagramSelect');
+    const themeSelect = document.getElementById('themeSelect');
+    const resetBtn = document.getElementById('resetBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const infoPanel = document.getElementById('infoPanel');
+    const statusEl = document.getElementById('status');
+
+    // Initialize
+    async function init() {
+      await renderDiagram();
+      setupEventListeners();
+    }
+
+    // Render the diagram
+    async function renderDiagram() {
+      const source = diagrams[currentDiagram];
+      const theme = themes[currentTheme];
+
+      setStatus('Rendering diagram...');
+
+      try {
+        // Clear container
+        container.innerHTML = '';
+
+        // Render with beautiful-mermaid
+        const svg = await beautifulMermaid.renderMermaid(source, theme);
+        container.innerHTML = svg;
+
+        // Store source on container for interactive-mermaid
+        container.setAttribute('data-mermaid-source', source);
+
+        // Make it interactive
+        if (currentInstance) {
+          currentInstance.destroy();
+        }
+
+        currentInstance = InteractiveMermaid.makeInteractive(container, {
+          onDragStart: (nodeId) => {
+            setStatus(`Dragging node: ${nodeId}`);
+          },
+          onDragMove: (state) => {
+            infoPanel.textContent = `Positions: ${JSON.stringify(state.positions, null, 2)}`;
+          },
+          onDragEnd: (state) => {
+            setStatus('Drag ended - positions saved!');
+            console.log('Final positions:', state.positions);
+          },
+          gridSize: 10,
+          autoSave: true,
+          touchEnabled: true
+        });
+
+        setStatus('Ready - Drag nodes to rearrange!');
+
+        // Show loaded positions
+        const positions = currentInstance.getPositions();
+        if (Object.keys(positions).length > 0) {
+          infoPanel.textContent = `Restored positions:\n${JSON.stringify(positions, null, 2)}`;
+        }
+
+      } catch (error) {
+        setStatus('Error rendering diagram');
+        console.error(error);
+      }
+    }
+
+    // Set up event listeners
+    function setupEventListeners() {
+      diagramSelect.addEventListener('change', (e) => {
+        currentDiagram = e.target.value;
+        renderDiagram();
+      });
+
+      themeSelect.addEventListener('change', (e) => {
+        currentTheme = e.target.value;
+        renderDiagram();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        if (currentInstance) {
+          currentInstance.resetPositions();
+          setStatus('Positions reset!');
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        const source = diagrams[currentDiagram];
+        InteractiveMermaid.clearFromLocalStorage(source);
+        setStatus('Saved positions cleared!');
+        renderDiagram();
+      });
+    }
+
+    // Helper to set status
+    function setStatus(message) {
+      statusEl.textContent = message;
+      statusEl.className = 'status info';
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>

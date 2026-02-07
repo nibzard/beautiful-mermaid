@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Mermaid Demo</title>
+  <meta name="description" content="Drag-and-drop wrapper for beautiful-mermaid diagrams">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0f0f14;
+      --bg-secondary: #1a1b26;
+      --bg-tertiary: #24283b;
+      --text-primary: #c0caf5;
+      --text-secondary: #a9b1d6;
+      --text-muted: #565f89;
+      --accent: #7aa2f7;
+      --accent-hover: #5d87e5;
+      --border: #414868;
+      --success: #9ece6a;
+      --danger: #f7768e;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin: 0 0 10px;
+      background: linear-gradient(135deg, var(--accent) 0%, #bb9af7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: var(--bg-tertiary);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    /* Main content */
+    main {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    select:hover, button:hover {
+      border-color: var(--accent);
+    }
+
+    select:focus, button:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.2);
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+      border: none;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    button.secondary {
+      background: var(--bg-tertiary);
+    }
+
+    button.danger {
+      background: transparent;
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    button.danger:hover {
+      background: rgba(247, 118, 142, 0.1);
+    }
+
+    /* Checkbox */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    /* Info panel */
+    .info-panel {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    /* Diagram area */
+    .diagram-wrapper {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 30px;
+      border: 1px solid var(--border);
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .diagram-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .diagram-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .status {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .status.ready {
+      background: rgba(158, 206, 106, 0.2);
+      color: var(--success);
+    }
+
+    .status.dragging {
+      background: rgba(122, 162, 247, 0.2);
+      color: var(--accent);
+    }
+
+    .diagram-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Loading state */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Code block */
+    .code-block {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* Interactive styles */
+    .mermaid-draggable {
+      transition: opacity 0.2s;
+    }
+
+    .mermaid-draggable:hover {
+      opacity: 0.8;
+    }
+
+    .mermaid-dragging {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Interactive Mermaid</h1>
+      <p class="subtitle">Drag-and-drop wrapper for beautiful-mermaid diagrams</p>
+      <span class="badge">v0.1.0</span>
+    </header>
+
+    <main>
+      <aside class="sidebar">
+        <div class="control-group">
+          <h3 class="section-title">Diagram Type</h3>
+          <select id="diagramSelect">
+            <option value="flowchart">Flowchart</option>
+            <option value="state">State Diagram</option>
+            <option value="sequence">Sequence Diagram</option>
+            <option value="class">Class Diagram</option>
+            <option value="er">ER Diagram</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <h3 class="section-title">Theme</h3>
+          <select id="themeSelect">
+            <option value="tokyo-night">Tokyo Night</option>
+            <option value="nord">Nord</option>
+            <option value="monokai">Monokai</option>
+            <option value="dracula">Dracula</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <h3 class="section-title">Options</h3>
+          <label class="checkbox-group">
+            <input type="checkbox" id="gridSnap" checked>
+            Grid Snap (10px)
+          </label>
+          <label class="checkbox-group" style="margin-top: 10px;">
+            <input type="checkbox" id="autoSave" checked>
+            Auto-save Positions
+          </label>
+        </div>
+
+        <div class="control-group">
+          <h3 class="section-title">Actions</h3>
+          <div class="btn-group">
+            <button id="resetBtn" class="secondary">Reset</button>
+            <button id="clearBtn" class="danger">Clear Saved</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3 class="section-title">Position Data</h3>
+          <div class="info-panel" id="infoPanel">
+            Drag a node to see position data...
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3 class="section-title">Mermaid Source</h3>
+          <div class="code-block" id="sourceCode">
+            Loading...
+          </div>
+        </div>
+      </aside>
+
+      <div class="diagram-wrapper">
+        <div class="diagram-header">
+          <h2 class="diagram-title" id="diagramTitle">Flowchart</h2>
+          <span class="status ready" id="status">Ready</span>
+        </div>
+        <div class="diagram-container" id="diagramContainer">
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Loading...</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>
+        Built with <a href="https://github.com/lukilabs/beautiful-mermaid" target="_blank">beautiful-mermaid</a> +
+        <a href="https://github.com/lukilabs/beautiful-mermaid/tree/main/interactive-mermaid" target="_blank">interactive-mermaid</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- Prefer bundled scripts (demo/vendor on Pages, repo bundles locally). Fall back to CDN. -->
+  <script type="module">
+    async function loadScript(src) {
+      return await new Promise((resolve, reject) => {
+        const el = document.createElement('script');
+        el.src = src;
+        el.async = true;
+        el.onload = () => resolve();
+        el.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(el);
+      });
+    }
+
+    async function loadLocalBundles() {
+      // 1) GitHub Pages: this demo is deployed as the site root; CI copies the bundles into demo/vendor/.
+      try {
+        await loadScript('./vendor/beautiful-mermaid.browser.global.js');
+        await loadScript('./vendor/interactive-mermaid.browser.global.js');
+
+        if (window.beautifulMermaid?.renderMermaid && window.InteractiveMermaid) {
+          return {
+            renderMermaid: window.beautifulMermaid.renderMermaid,
+            InteractiveMermaid: window.InteractiveMermaid,
+            source: 'vendor',
+          };
+        }
+      } catch {
+        // Fall through to repo-root bundles.
+      }
+
+      // 2) Local dev: serve from repo root so ../dist and ../interactive-mermaid/dist are reachable.
+      await loadScript('../dist/beautiful-mermaid.browser.global.js');
+      await loadScript('../interactive-mermaid/dist/interactive-mermaid.browser.global.js');
+
+      if (!window.beautifulMermaid || !window.beautifulMermaid.renderMermaid) {
+        throw new Error('beautifulMermaid global not found after loading local bundle');
+      }
+      if (!window.InteractiveMermaid) {
+        throw new Error('InteractiveMermaid global not found after loading local bundle');
+      }
+
+      return {
+        renderMermaid: window.beautifulMermaid.renderMermaid,
+        InteractiveMermaid: window.InteractiveMermaid,
+        source: 'local',
+      };
+    }
+
+    async function loadFromCdn() {
+      const { renderMermaid } = await import('https://esm.sh/beautiful-mermaid@0.1.3');
+
+      let InteractiveMermaid = null;
+      try {
+        InteractiveMermaid = await import('https://esm.sh/interactive-mermaid@0.1.0');
+      } catch {
+        // OK: interactive-mermaid may not be published/available in some environments.
+      }
+
+      if (InteractiveMermaid) {
+        window.InteractiveMermaid = InteractiveMermaid;
+      }
+
+      return { renderMermaid, InteractiveMermaid, source: 'cdn' };
+    }
+
+    let renderMermaid;
+    try {
+      const local = await loadLocalBundles();
+      renderMermaid = local.renderMermaid;
+      window.InteractiveMermaid = local.InteractiveMermaid;
+      console.log(`Loaded beautiful-mermaid + interactive-mermaid from ${local.source} bundles`);
+    } catch (e) {
+      console.warn('Local bundles not available, falling back to CDN:', e);
+      const cdn = await loadFromCdn();
+      renderMermaid = cdn.renderMermaid;
+      console.log('Loaded beautiful-mermaid from CDN');
+    }
+
+    // Diagram definitions
+    const diagrams = {
+      flowchart: `graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Process 1]
+    B -->|No| D[Process 2]
+    C --> E[End]
+    D --> E
+    C --> F[Alternative Path]
+    F --> E
+    style A fill:#7aa2f7
+    style E fill:#9ece6a`,
+
+      state: `stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing: start event
+    Processing --> Success: complete
+    Processing --> Error: failed
+    Error --> Idle: retry
+    Error --> [*]: give up
+    Success --> [*]`,
+
+      sequence: `sequenceDiagram
+    participant User
+    participant Server
+    participant Database
+
+    User->>Server: Request
+    Server->>Database: Query
+    Database-->>Server: Result
+    Server-->>User: Response`,
+
+      class: `classDiagram
+    class Animal {
+        +String name
+        +int age
+        +makeSound()*
+    }
+    class Dog {
+        +bark()
+        +fetch()
+    }
+    class Cat {
+        +meow()
+        +scratch()
+    }
+    Animal <|-- Dog: inherits
+    Animal <|-- Cat: inherits`,
+
+      er: `erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    PRODUCT ||--o{ LINE_ITEM : "ordered in"
+
+    CUSTOMER {
+        string name
+        string email
+        int id PK
+    }
+    ORDER {
+        int id PK
+        date created
+    }
+    PRODUCT {
+        int id PK
+        string name
+        float price
+    }`
+    };
+
+    // Theme definitions
+    const themes = {
+      'tokyo-night': {
+        bg: '#1a1b26',
+        fg: '#a9b1d6',
+        line: '#414868',
+        accent: '#7aa2f7',
+        muted: '#565f89',
+        surface: '#24283b',
+        border: '#414868'
+      },
+      nord: {
+        bg: '#2e3440',
+        fg: '#eceff4',
+        line: '#4c566a',
+        accent: '#88c0d0',
+        muted: '#81a1c1',
+        surface: '#3b4252',
+        border: '#4c566a'
+      },
+      monokai: {
+        bg: '#272822',
+        fg: '#f8f8f2',
+        line: '#75715e',
+        accent: '#a6e22e',
+        muted: '#66d9ef',
+        surface: '#3e3d32',
+        border: '#49483e'
+      },
+      dracula: {
+        bg: '#282a36',
+        fg: '#f8f8f2',
+        line: '#44475a',
+        accent: '#bd93f9',
+        muted: '#6272a4',
+        surface: '#44475a',
+        border: '#6272a4'
+      },
+      light: {
+        bg: '#ffffff',
+        fg: '#27272a',
+        line: '#a1a1aa',
+        accent: '#3b82f6',
+        muted: '#71717a',
+        surface: '#f4f4f5',
+        border: '#e4e4e7'
+      }
+    };
+
+    // State
+    let currentInstance = null;
+    let currentDiagram = 'flowchart';
+    let currentTheme = 'tokyo-night';
+
+    // DOM elements
+    const container = document.getElementById('diagramContainer');
+    const diagramSelect = document.getElementById('diagramSelect');
+    const themeSelect = document.getElementById('themeSelect');
+    const gridSnap = document.getElementById('gridSnap');
+    const autoSave = document.getElementById('autoSave');
+    const resetBtn = document.getElementById('resetBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const infoPanel = document.getElementById('infoPanel');
+    const statusEl = document.getElementById('status');
+    const diagramTitle = document.getElementById('diagramTitle');
+    const sourceCode = document.getElementById('sourceCode');
+
+    // Initialize
+    async function init() {
+      setupEventListeners();
+      await renderDiagram();
+    }
+
+    // Render the diagram
+    async function renderDiagram() {
+      const source = diagrams[currentDiagram];
+      const theme = themes[currentTheme];
+
+      setStatus('Rendering...', false);
+
+      try {
+        // Clear container
+        container.innerHTML = '';
+
+        // Render with beautiful-mermaid
+        const svg = await renderMermaid(source, theme);
+        container.innerHTML = svg;
+
+        // Store source on container
+        container.setAttribute('data-mermaid-source', source);
+
+        // Update source code display
+        sourceCode.textContent = source;
+
+        // Make it interactive if available
+        if (window.InteractiveMermaid) {
+          if (currentInstance) {
+            currentInstance.destroy();
+          }
+
+          currentInstance = window.InteractiveMermaid.makeInteractive(container, {
+            onDragStart: (nodeId) => {
+              setStatus(`Dragging: ${nodeId}`, true);
+            },
+            onDragMove: (state) => {
+              const positionCount = Object.keys(state.positions).length;
+              infoPanel.textContent = `Moving node...\nPositions stored: ${positionCount}`;
+            },
+            onDragEnd: (state) => {
+              setStatus('Ready - Saved!', false);
+              const positions = state.positions;
+              const positionCount = Object.keys(positions).length;
+              infoPanel.textContent = `Saved ${positionCount} node positions:\n${JSON.stringify(positions, null, 2)}`;
+            },
+            gridSize: gridSnap.checked ? 10 : 0,
+            autoSave: autoSave.checked,
+            touchEnabled: true
+          });
+
+          // Show loaded positions
+          const positions = currentInstance.getPositions();
+          if (Object.keys(positions).length > 0) {
+            infoPanel.textContent = `Restored positions:\n${JSON.stringify(positions, null, 2)}`;
+          }
+        } else {
+          infoPanel.textContent =
+            'Interactive features not available.\n' +
+            '(If running locally: serve from repo root so ../interactive-mermaid/dist is accessible.)';
+        }
+
+        setStatus('Ready - Drag nodes!', false);
+
+      } catch (error) {
+        setStatus('Error rendering diagram', false);
+        console.error(error);
+        container.innerHTML = `<div style="color: var(--danger)">Error: ${error.message}</div>`;
+      }
+    }
+
+    // Set up event listeners
+    function setupEventListeners() {
+      diagramSelect.addEventListener('change', (e) => {
+        currentDiagram = e.target.value;
+        diagramTitle.textContent = diagramSelect.options[diagramSelect.selectedIndex].text;
+        renderDiagram();
+      });
+
+      themeSelect.addEventListener('change', (e) => {
+        currentTheme = e.target.value;
+        renderDiagram();
+      });
+
+      gridSnap.addEventListener('change', renderDiagram);
+      autoSave.addEventListener('change', renderDiagram);
+
+      resetBtn.addEventListener('click', () => {
+        if (currentInstance) {
+          currentInstance.resetPositions();
+          setStatus('Positions reset!', false);
+          infoPanel.textContent = 'Positions reset to original';
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        if (window.InteractiveMermaid && currentInstance) {
+          const source = diagrams[currentDiagram];
+          window.InteractiveMermaid.clearFromLocalStorage(source);
+          setStatus('Saved positions cleared!', false);
+          infoPanel.textContent = 'Saved positions cleared';
+          renderDiagram();
+        }
+      });
+    }
+
+    // Helper to set status
+    function setStatus(message, isDragging) {
+      statusEl.textContent = message;
+      statusEl.className = isDragging ? 'status dragging' : 'status ready';
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>

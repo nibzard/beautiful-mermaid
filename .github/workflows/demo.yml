@@ -1,0 +1,66 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - 'interactive-mermaid/**'
+      - 'src/**'
+      - 'index.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsup.config.ts'
+      - '.github/workflows/demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundles
+        run: |
+          npm run build
+          npm run build:interactive
+
+      - name: Bundle demo dependencies
+        run: |
+          mkdir -p demo/vendor
+          cp dist/beautiful-mermaid.browser.global.js demo/vendor/beautiful-mermaid.browser.global.js
+          cp dist/beautiful-mermaid.browser.global.js.map demo/vendor/beautiful-mermaid.browser.global.js.map
+          cp interactive-mermaid/dist/interactive-mermaid.browser.global.js demo/vendor/interactive-mermaid.browser.global.js
+          cp interactive-mermaid/dist/interactive-mermaid.browser.global.js.map demo/vendor/interactive-mermaid.browser.global.js.map
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './demo'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

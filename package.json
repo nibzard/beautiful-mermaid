@@ -47,6 +47,9 @@
     "theming"
   ],
   "author": "Luki Labs",
+  "workspaces": [
+    "interactive-mermaid"
+  ],
   "scripts": {
     "test": "bun test src/__tests__/",
     "samples": "bun run index.ts",
@@ -54,6 +57,7 @@
     "bench": "bun run bench.ts",
     "build": "tsup",
     "build:samples": "bun run index.ts && mkdir -p samples && mv index.html samples/ && cp -r public/* samples/",
+    "build:interactive": "cd interactive-mermaid && npm run build",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
