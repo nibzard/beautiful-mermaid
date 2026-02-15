@@ -1,0 +1,4 @@
+interface:
+  display_name: "Beautiful Mermaid Steel"
+  short_description: "Build steel-themed diagrams from prompt, article, or image"
+  default_prompt: "Turn this input into a Mermaid diagram and render a PNG with steel-blue, steel-green, or steel-yellow."
